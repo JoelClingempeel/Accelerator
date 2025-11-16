@@ -3,7 +3,8 @@ module mxu(
     input wire rst,
     input wire ce,
     input wire [16*2-1:0] north_input,
-    input wire [16*2-1:0] west_input
+    input wire [16*2-1:0] west_input,
+    output wire [16*2*2-1:0] result_out
 );
 
 localparam NUM_SIZE = 16;
@@ -38,6 +39,8 @@ generate
                 .east_out(west_east_wires[west_east_idx + 1]),
                 .result(result[i][j])
             );
+            localparam k = i * GRID_SIZE + j;
+            assign result_out[(k+1)*NUM_SIZE-1 : k*NUM_SIZE] = result[i][j];
         end
     end
 endgenerate

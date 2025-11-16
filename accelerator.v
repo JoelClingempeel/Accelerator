@@ -19,11 +19,28 @@ reg [ADDRESS_LEN-1:0] west_index[GRID_SIZE-1:0];
 wire [NUM_SIZE*GRID_SIZE-1:0] north_input;
 wire [NUM_SIZE*GRID_SIZE-1:0] west_input;
 
+wire [16*2*2-1:0] result_out;
+wire [15:0] result[1:0][1:0];
+
+
+`ifndef SYNTHESIS
+    // Debugging wires to display nicely in simulator
+    wire [15:0] result00, result01, result10, result11;
+    assign result00 = result[0][0];
+    assign result01 = result[0][1];
+    assign result10 = result[1][0];
+    assign result11 = result[1][1];
+`endif
+
 genvar i,j;
 generate
     for (i = 0; i < GRID_SIZE; i++) begin
        assign north_input[(i+1)*NUM_SIZE-1:i*NUM_SIZE] = north_buffer[i][north_index[i]];
        assign west_input[(i+1)*NUM_SIZE-1:i*NUM_SIZE] = west_buffer[i][west_index[i]];
+       for (j = 0; j < GRID_SIZE; j = j + 1) begin
+            localparam k = i * GRID_SIZE + j;
+            assign result[i][j] = result_out[(k+1)*NUM_SIZE-1 : k*NUM_SIZE];
+        end
     end
 endgenerate
 
@@ -32,7 +49,8 @@ mxu my_mxu(
     .rst(rst),
     .ce(ce),
     .north_input(north_input),
-    .west_input(west_input)
+    .west_input(west_input),
+    .result_out(result_out)
 );
 
 integer k, l;
