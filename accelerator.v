@@ -99,44 +99,27 @@ always @(posedge clk or posedge rst) begin
         if (mat_mult_stage > 0) begin
             case (mat_mult_stage)
                 1: begin
+                    // TODO Do this more systematically.
                     west_buffer[0][0] <= memory[operand1];
-                end
-                2: begin
                     west_buffer[0][1] <= memory[operand1+1];
-                end
-                3: begin
                     west_buffer[1][1] <= memory[operand1+2];
-                end
-                4: begin
                     west_buffer[1][2] <= memory[operand1+3];
-                end
-                5: begin
                     north_buffer[0][0] <= memory[operand2];
-                end
-                6: begin
                     north_buffer[0][1] <= memory[operand2+2];
-                end
-                7: begin
                     north_buffer[1][1] <= memory[operand2+1];
-                end
-                8: begin
                     north_buffer[1][2] <= memory[operand2+3];
                     ce <= 1;  // Start systolic array.
                 end
-                9: begin
-                end
-                10: begin
-                end
-                11: begin
+                4: begin
                     memory[operand3] <= result00;
                 end
-                12: begin
+                5: begin
                     memory[operand3+1] <= result01;
                 end
-                13: begin
+                6: begin
                     memory[operand3+2] <= result10;
                 end
-                14: begin
+                7: begin
                     memory[operand3+3] <= result11;
                     ce <= 0;  // Stop systolic array.
                     pc <= pc + 1;
@@ -144,7 +127,7 @@ always @(posedge clk or posedge rst) begin
                 default: begin
                 end
             endcase
-            if (mat_mult_stage == 18) begin
+            if (mat_mult_stage == 7) begin
                 mat_mult_stage <= 0;
             end else begin
                 mat_mult_stage <= mat_mult_stage + 1;
