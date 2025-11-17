@@ -25,6 +25,7 @@ initial begin
     uut.instructions[4][12:8] = 5'd4;
     uut.instructions[4][7:3] = 5'd8;
     uut.instructions[4][2:0] = 3'd0;
+    uut.instructions[7][23:18] = 6'd10;
     uut.memory[0] = 16'd3;
     uut.memory[1] = 16'd1;
     uut.memory[2] = 16'd4;
@@ -33,10 +34,6 @@ initial begin
     uut.memory[5] = 16'd1;
     uut.memory[6] = 16'd7;
     uut.memory[7] = 16'd8;
-    # 300
-    uut.ce = 1;
-    # 500
-    uut.ce = 0;
 end
 
 initial begin

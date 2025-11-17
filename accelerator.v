@@ -25,8 +25,8 @@ wire [2:0] operand4;
 assign operand4 = curr_instruction[2:0];
 
 reg [3:0] mat_mult_stage;
-
 reg ce;
+reg halted;
 
 reg [NUM_SIZE-1:0] north_buffer[GRID_SIZE-1:0][BUFFER_LEN-1:0];
 reg [NUM_SIZE-1:0] west_buffer[GRID_SIZE-1:0][BUFFER_LEN-1:0];
@@ -94,7 +94,8 @@ always @(posedge clk or posedge rst) begin
         end
         pc <= 0;
         mat_mult_stage <= 0;
-    end else begin  // Rising clk edge
+        halted <= 0;
+    end else if (!halted) begin  // Rising clk edge
         if (mat_mult_stage > 0) begin
             case (mat_mult_stage)
                 1: begin
@@ -150,6 +151,8 @@ always @(posedge clk or posedge rst) begin
             end
         end else if (opcode == 8'd1) begin  // Mat Mult
             mat_mult_stage <= 1;
+        end else if (opcode == 10) begin  // Halt
+            halted <= 1;
         end else begin  // No-op
             pc <= pc + 1;
         end
