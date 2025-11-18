@@ -150,7 +150,7 @@ always @(posedge clk or posedge rst) begin
             end else begin
                 mat_mult_stage <= mat_mult_stage + 1;
             end
-        end if (copy_buffer_flag) begin
+        end else if (copy_buffer_flag) begin
             if (offset < length_buffer) begin
                 memory[dest_buffer+offset] <= vec_buffer[offset];
                 offset <= offset + 1;
