@@ -159,6 +159,8 @@ always @(posedge clk or posedge rst) begin
                 pc <= pc + 1;
                 copy_buffer_flag <= 0;
             end
+        end else if (opcode == 8'd1) begin  // Mat Mult
+            mat_mult_stage <= 1;
         end else if (opcode == 8'd2) begin  // Vec Add
             for (n = 0; n < VEC_BUFFER_LEN; n++) begin
                 vec_buffer[n] <= memory[operand1+n] + memory[operand2+n];
@@ -166,8 +168,13 @@ always @(posedge clk or posedge rst) begin
             dest_buffer <= operand3;
             length_buffer <= operand4;
             copy_buffer_flag <= 1;
-        end else if (opcode == 8'd1) begin  // Mat Mult
-            mat_mult_stage <= 1;
+        end else if (opcode == 8'd3) begin  // Move
+            for (n = 0; n < VEC_BUFFER_LEN; n++) begin
+                vec_buffer[n] <= memory[operand1+n];
+            end
+            dest_buffer <= operand2;
+            length_buffer <= operand3;
+            copy_buffer_flag <= 1;
         end else if (opcode == 10) begin  // Halt
             halted <= 1;
         end else begin  // No-op

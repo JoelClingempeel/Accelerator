@@ -20,17 +20,24 @@ initial begin
     rst = ~rst;
     # 10
     rst = ~rst;
+    // Mat Mult
     // uut.instructions[4][23:18] = 6'd1;
     // uut.instructions[4][17:13] = 5'd0;
     // uut.instructions[4][12:8] = 5'd4;
     // uut.instructions[4][7:3] = 5'd8;
     // uut.instructions[4][2:0] = 3'd0;
-    // uut.instructions[7][23:18] = 6'd10;
-    uut.instructions[4][23:18] = 6'd2;
+    // Vec Add
+    // uut.instructions[4][23:18] = 6'd2;
+    // uut.instructions[4][17:13] = 5'd0;
+    // uut.instructions[4][12:8] = 5'd4;
+    // uut.instructions[4][7:3] = 5'd8;
+    // uut.instructions[4][2:0] = 3'd4;
+    // Vec Mov
+    uut.instructions[4][23:18] = 6'd3;
     uut.instructions[4][17:13] = 5'd0;
-    uut.instructions[4][12:8] = 5'd4;
-    uut.instructions[4][7:3] = 5'd8;
-    uut.instructions[4][2:0] = 3'd4;
+    uut.instructions[4][12:8] = 5'd8;
+    uut.instructions[4][7:3] = 5'd4;
+    uut.instructions[4][2:0] = 3'd0;
     uut.instructions[7][23:18] = 6'd10;
     uut.memory[0] = 16'd3;
     uut.memory[1] = 16'd1;
