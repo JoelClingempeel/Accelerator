@@ -8,11 +8,13 @@ parameter BUFFER_LEN = 32;
 parameter GRID_SIZE = 2;
 parameter ADDRESS_LEN = 3;
 parameter VEC_BUFFER_LEN = 8;
+parameter NUM_INSTRUCTIONS = 16;
+parameter WORDS_IN_MEMORY = 32;
 
-// TODO Stop hardcoding.
-reg [31:0] instructions [15:0];
-reg [15:0] memory [31:0];
-reg [4:0] pc;
+reg [31:0] instructions [NUM_INSTRUCTIONS-1:0];
+reg [NUM_SIZE-1:0] memory [WORDS_IN_MEMORY-1:0];
+reg [$clog2(NUM_INSTRUCTIONS)-1:0] pc;
+
 // Slice up current instruction into opcode and operands.
 wire [31:0] curr_instruction;
 assign curr_instruction = instructions[pc];
@@ -39,14 +41,14 @@ wire [NUM_SIZE*GRID_SIZE-1:0] north_input;
 wire [NUM_SIZE*GRID_SIZE-1:0] west_input;
 
 wire [16*2*2-1:0] result_out;
-wire [15:0] result[1:0][1:0];
+wire [NUM_SIZE-1:0] result[1:0][1:0];
 
-reg [15:0] vec_buffer[VEC_BUFFER_LEN-1:0];
+reg [NUM_SIZE-1:0] vec_buffer[VEC_BUFFER_LEN-1:0];
 reg copy_buffer_flag;
 reg [2:0] offset;
 reg [4:0] dest_buffer;
 reg [2:0] length_buffer;
-wire [15:0] vec_buffer1, vec_buffer2, vec_buffer3, vec_buffer4;
+wire [NUM_SIZE-1:0] vec_buffer1, vec_buffer2, vec_buffer3, vec_buffer4;
 assign vec_buffer1 = vec_buffer[0];
 assign vec_buffer2 = vec_buffer[1];
 assign vec_buffer3 = vec_buffer[2];
@@ -54,12 +56,12 @@ assign vec_buffer4 = vec_buffer[3];
 
 `ifndef SYNTHESIS
     // Debugging wires to display nicely in simulator
-    wire [15:0] result00, result01, result10, result11;
+    wire [NUM_SIZE-1:0] result00, result01, result10, result11;
     assign result00 = result[0][0];
     assign result01 = result[0][1];
     assign result10 = result[1][0];
     assign result11 = result[1][1];
-    wire [15:0] out00, out01, out10, out11;
+    wire [NUM_SIZE-1:0] out00, out01, out10, out11;
     assign out00 = memory[8];
     assign out01 = memory[9];
     assign out10 = memory[10];
