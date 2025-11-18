@@ -177,6 +177,13 @@ always @(posedge clk or posedge rst) begin
             dest_buffer <= operand2;
             length_buffer <= operand3;
             copy_buffer_flag <= 1;
+        end else if (opcode == 8'd4) begin  // Move
+            for (n = 0; n < VEC_BUFFER_LEN; n++) begin
+                vec_buffer[n] <= ($signed(memory[operand1+n]) > 0) ? memory[operand1+n] : 0;
+            end
+            dest_buffer <= operand2;
+            length_buffer <= operand3;
+            copy_buffer_flag <= 1;
         end else if (opcode == 10) begin  // Halt
             halted <= 1;
         end else begin  // No-op

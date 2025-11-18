@@ -6,6 +6,7 @@ This project creates a basic linear algebra accelerator in Verilog. As it is a p
  * `MAT_MULT(mat1_start, mat2_start, dest)`
  * `VEC_ADD(vec1_start, vec2_start, dest, size)`
  * `VEC_MOV(vec1_start, vec2_start, size)`
+ * `RELU(vec_start, dest, size)`
  * `NOP`
  * `HALT`
 
