@@ -7,6 +7,7 @@ parameter NUM_SIZE = 16;
 parameter BUFFER_LEN = 32;
 parameter GRID_SIZE = 2;
 parameter ADDRESS_LEN = 3;
+parameter VEC_BUFFER_LEN = 8;
 
 // TODO Stop hardcoding.
 reg [31:0] instructions [15:0];
@@ -17,7 +18,7 @@ wire [31:0] curr_instruction;
 assign curr_instruction = instructions[pc];
 wire [5:0] opcode;
 assign opcode = curr_instruction[23:18];
-wire [3:0] operand1, operand2, operand3;
+wire [4:0] operand1, operand2, operand3;
 assign operand1 = curr_instruction[17:13];
 assign operand2 = curr_instruction[12:8];
 assign operand3 = curr_instruction[7:3];
@@ -40,6 +41,16 @@ wire [NUM_SIZE*GRID_SIZE-1:0] west_input;
 wire [16*2*2-1:0] result_out;
 wire [15:0] result[1:0][1:0];
 
+reg [15:0] vec_buffer[VEC_BUFFER_LEN-1:0];
+reg copy_buffer_flag;
+reg [2:0] offset;
+reg [4:0] dest_buffer;
+reg [2:0] length_buffer;
+wire [15:0] vec_buffer1, vec_buffer2, vec_buffer3, vec_buffer4;
+assign vec_buffer1 = vec_buffer[0];
+assign vec_buffer2 = vec_buffer[1];
+assign vec_buffer3 = vec_buffer[2];
+assign vec_buffer4 = vec_buffer[3];
 
 `ifndef SYNTHESIS
     // Debugging wires to display nicely in simulator
@@ -76,7 +87,7 @@ mxu my_mxu(
     .result_out(result_out)
 );
 
-integer k, l, m;
+integer k, l, m, n;
 always @(posedge clk or posedge rst) begin
     if (rst) begin
         for (k = 0; k < GRID_SIZE; k++) begin
@@ -95,6 +106,13 @@ always @(posedge clk or posedge rst) begin
         pc <= 0;
         mat_mult_stage <= 0;
         halted <= 0;
+        for (l = 0; l < VEC_BUFFER_LEN; l++) begin
+            vec_buffer[l] <= 0;
+        end
+        dest_buffer <= 0;
+        length_buffer <= 0;
+        copy_buffer_flag <= 0;
+        offset <= 0;
     end else if (!halted) begin  // Rising clk edge
         if (mat_mult_stage > 0) begin
             case (mat_mult_stage)
@@ -132,6 +150,22 @@ always @(posedge clk or posedge rst) begin
             end else begin
                 mat_mult_stage <= mat_mult_stage + 1;
             end
+        end if (copy_buffer_flag) begin
+            if (offset < length_buffer) begin
+                memory[dest_buffer+offset] <= vec_buffer[offset];
+                offset <= offset + 1;
+            end else begin
+                offset <= 0;
+                pc <= pc + 1;
+                copy_buffer_flag <= 0;
+            end
+        end else if (opcode == 8'd2) begin  // Vec Add
+            for (n = 0; n < VEC_BUFFER_LEN; n++) begin
+                vec_buffer[n] <= memory[operand1+n] + memory[operand2+n];
+            end
+            dest_buffer <= operand3;
+            length_buffer <= operand4;
+            copy_buffer_flag <= 1;
         end else if (opcode == 8'd1) begin  // Mat Mult
             mat_mult_stage <= 1;
         end else if (opcode == 10) begin  // Halt
