@@ -22,7 +22,7 @@ with open(in_file) as f:
         operand3 = int(tokens[3].replace(",", "")) if len(tokens) > 3 else 0
         operand4 = int(tokens[4].replace(",", "")) if len(tokens) > 4 else 0
 
-        operands = (operand1<<13) + (operand2<<8) + (operand3<<3)
+        operands = (operand1<<13) + (operand2<<8) + (operand3<<3) + operand4
         bin_instruction = bin((opcodes[instruction]<<18) + operands)[2:]
         out.append(bin_instruction)
 
