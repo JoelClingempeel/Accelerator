@@ -25,8 +25,8 @@ initial begin
     rst = ~rst;
     $readmemb(BINARY_FILE, uut.instructions);
     uut.memory[0] = 16'd3;
-    uut.memory[1] = 16'd1;
-    uut.memory[2] = 16'd4;
+    uut.memory[1] = -$signed(16'd1);
+    uut.memory[2] = -$signed(16'd4);
     uut.memory[3] = 16'd1;
     uut.memory[4] = 16'd2;
     uut.memory[5] = 16'd1;

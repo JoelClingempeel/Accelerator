@@ -19,6 +19,7 @@ always @(posedge clk or posedge rst) begin
             south_out <= north_in;
             east_out <= west_in;
             result <= result + (north_in * west_in);
+            result <= result + ($signed(north_in) * $signed(west_in));
         end
     end
 end

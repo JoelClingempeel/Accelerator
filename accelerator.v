@@ -11,7 +11,7 @@ parameter VEC_BUFFER_LEN = 8;
 
 // TODO Stop hardcoding.
 reg [31:0] instructions [15:0];
-reg [7:0] memory [31:0];
+reg [15:0] memory [31:0];
 reg [4:0] pc;
 // Slice up current instruction into opcode and operands.
 wire [31:0] curr_instruction;
@@ -163,7 +163,7 @@ always @(posedge clk or posedge rst) begin
             mat_mult_stage <= 1;
         end else if (opcode == 8'd2) begin  // Vec Add
             for (n = 0; n < VEC_BUFFER_LEN; n++) begin
-                vec_buffer[n] <= memory[operand1+n] + memory[operand2+n];
+                vec_buffer[n] <= $signed(memory[operand1+n]) + $signed(memory[operand2+n]);
             end
             dest_buffer <= operand3;
             length_buffer <= operand4;
