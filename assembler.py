@@ -3,6 +3,7 @@ import sys
 opcodes = {"mat_mult": 1,
            "vec_add": 2,
            "vec_mov": 3,
+           "vec_scal_mult": 5,
            "relu": 4,
            "halt": 10,
            "nop": 0}

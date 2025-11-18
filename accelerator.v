@@ -177,12 +177,20 @@ always @(posedge clk or posedge rst) begin
             dest_buffer <= operand2;
             length_buffer <= operand3;
             copy_buffer_flag <= 1;
-        end else if (opcode == 8'd4) begin  // Move
+        end else if (opcode == 8'd4) begin  // Relu
             for (n = 0; n < VEC_BUFFER_LEN; n++) begin
                 vec_buffer[n] <= ($signed(memory[operand1+n]) > 0) ? memory[operand1+n] : 0;
             end
             dest_buffer <= operand2;
             length_buffer <= operand3;
+            copy_buffer_flag <= 1;
+        end else if (opcode == 8'd5) begin  // Vec Scal Mult
+            // TODO Add support for negative scalars.
+            for (n = 0; n < VEC_BUFFER_LEN; n++) begin
+                vec_buffer[n] <= $signed(operand2) * $signed(memory[operand1+n]);
+            end
+            dest_buffer <= operand3;
+            length_buffer <= operand4;
             copy_buffer_flag <= 1;
         end else if (opcode == 10) begin  // Halt
             halted <= 1;
