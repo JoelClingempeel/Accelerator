@@ -14,6 +14,7 @@ parameter WORDS_IN_MEMORY = 32;
 reg [31:0] instructions [NUM_INSTRUCTIONS-1:0];
 reg [NUM_SIZE-1:0] memory [WORDS_IN_MEMORY-1:0];
 reg [$clog2(NUM_INSTRUCTIONS)-1:0] pc;
+reg halted;
 
 // Slice up current instruction into opcode and operands.
 wire [31:0] curr_instruction;
@@ -27,40 +28,27 @@ assign operand3 = curr_instruction[7:3];
 wire [2:0] operand4;
 assign operand4 = curr_instruction[2:0];
 
+// MXU Registers
 reg [3:0] mat_mult_stage;
 reg ce;
-reg halted;
-
 reg [NUM_SIZE-1:0] north_buffer[GRID_SIZE-1:0][BUFFER_LEN-1:0];
 reg [NUM_SIZE-1:0] west_buffer[GRID_SIZE-1:0][BUFFER_LEN-1:0];
-
 reg [ADDRESS_LEN-1:0] north_index[GRID_SIZE-1:0];
 reg [ADDRESS_LEN-1:0] west_index[GRID_SIZE-1:0];
-
 wire [NUM_SIZE*GRID_SIZE-1:0] north_input;
 wire [NUM_SIZE*GRID_SIZE-1:0] west_input;
+wire [16*2*2-1:0] mxu_result_out;
+wire [NUM_SIZE-1:0] mxu_result[1:0][1:0];
 
-wire [16*2*2-1:0] result_out;
-wire [NUM_SIZE-1:0] result[1:0][1:0];
-
+// Vector Registers
 reg [NUM_SIZE-1:0] vec_buffer[VEC_BUFFER_LEN-1:0];
-reg copy_buffer_flag;
+reg copy_vec_buffer_flag;
 reg [2:0] offset;
 reg [4:0] dest_buffer;
 reg [2:0] length_buffer;
-wire [NUM_SIZE-1:0] vec_buffer1, vec_buffer2, vec_buffer3, vec_buffer4;
-assign vec_buffer1 = vec_buffer[0];
-assign vec_buffer2 = vec_buffer[1];
-assign vec_buffer3 = vec_buffer[2];
-assign vec_buffer4 = vec_buffer[3];
 
 `ifndef SYNTHESIS
     // Debugging wires to display nicely in simulator
-    wire [NUM_SIZE-1:0] result00, result01, result10, result11;
-    assign result00 = result[0][0];
-    assign result01 = result[0][1];
-    assign result10 = result[1][0];
-    assign result11 = result[1][1];
     wire [NUM_SIZE-1:0] out00, out01, out10, out11;
     assign out00 = memory[8];
     assign out01 = memory[9];
@@ -75,7 +63,7 @@ generate
        assign west_input[(i+1)*NUM_SIZE-1:i*NUM_SIZE] = west_buffer[i][west_index[i]];
        for (j = 0; j < GRID_SIZE; j = j + 1) begin
             localparam k = i * GRID_SIZE + j;
-            assign result[i][j] = result_out[(k+1)*NUM_SIZE-1 : k*NUM_SIZE];
+            assign mxu_result[i][j] = mxu_result_out[(k+1)*NUM_SIZE-1 : k*NUM_SIZE];
         end
     end
 endgenerate
@@ -86,7 +74,7 @@ mxu my_mxu(
     .ce(ce),
     .north_input(north_input),
     .west_input(west_input),
-    .result_out(result_out)
+    .result_out(mxu_result_out)
 );
 
 integer k, l, m, n;
@@ -113,13 +101,13 @@ always @(posedge clk or posedge rst) begin
         end
         dest_buffer <= 0;
         length_buffer <= 0;
-        copy_buffer_flag <= 0;
+        copy_vec_buffer_flag <= 0;
         offset <= 0;
     end else if (!halted) begin  // Rising clk edge
         if (mat_mult_stage > 0) begin
             case (mat_mult_stage)
                 1: begin
-                    // TODO Do this more systematically.
+                    // Prepare systolic array buffers.
                     west_buffer[0][0] <= memory[operand1];
                     west_buffer[0][1] <= memory[operand1+1];
                     west_buffer[1][1] <= memory[operand1+2];
@@ -131,16 +119,16 @@ always @(posedge clk or posedge rst) begin
                     ce <= 1;  // Start systolic array.
                 end
                 4: begin
-                    memory[operand3] <= result00;
+                    memory[operand3] <= mxu_result[0][0];
                 end
                 5: begin
-                    memory[operand3+1] <= result01;
+                    memory[operand3+1] <= mxu_result[0][1];
                 end
                 6: begin
-                    memory[operand3+2] <= result10;
+                    memory[operand3+2] <= mxu_result[1][0];
                 end
                 7: begin
-                    memory[operand3+3] <= result11;
+                    memory[operand3+3] <= mxu_result[1][1];
                     ce <= 0;  // Stop systolic array.
                     pc <= pc + 1;
                 end
@@ -152,14 +140,14 @@ always @(posedge clk or posedge rst) begin
             end else begin
                 mat_mult_stage <= mat_mult_stage + 1;
             end
-        end else if (copy_buffer_flag) begin
+        end else if (copy_vec_buffer_flag) begin
             if (offset < length_buffer) begin
                 memory[dest_buffer+offset] <= vec_buffer[offset];
                 offset <= offset + 1;
             end else begin
                 offset <= 0;
                 pc <= pc + 1;
-                copy_buffer_flag <= 0;
+                copy_vec_buffer_flag <= 0;
             end
         end else if (opcode == 8'd1) begin  // Mat Mult
             mat_mult_stage <= 1;
@@ -169,29 +157,28 @@ always @(posedge clk or posedge rst) begin
             end
             dest_buffer <= operand3;
             length_buffer <= operand4;
-            copy_buffer_flag <= 1;
+            copy_vec_buffer_flag <= 1;
         end else if (opcode == 8'd3) begin  // Move
             for (n = 0; n < VEC_BUFFER_LEN; n++) begin
                 vec_buffer[n] <= memory[operand1+n];
             end
             dest_buffer <= operand2;
             length_buffer <= operand3;
-            copy_buffer_flag <= 1;
+            copy_vec_buffer_flag <= 1;
         end else if (opcode == 8'd4) begin  // Relu
             for (n = 0; n < VEC_BUFFER_LEN; n++) begin
                 vec_buffer[n] <= ($signed(memory[operand1+n]) > 0) ? memory[operand1+n] : 0;
             end
             dest_buffer <= operand2;
             length_buffer <= operand3;
-            copy_buffer_flag <= 1;
+            copy_vec_buffer_flag <= 1;
         end else if (opcode == 8'd5) begin  // Vec Scal Mult
-            // TODO Add support for negative scalars.
             for (n = 0; n < VEC_BUFFER_LEN; n++) begin
                 vec_buffer[n] <= $signed(memory[operand2]) * $signed(memory[operand1+n]);
             end
             dest_buffer <= operand3;
             length_buffer <= operand4;
-            copy_buffer_flag <= 1;
+            copy_vec_buffer_flag <= 1;
         end else if (opcode == 10) begin  // Halt
             halted <= 1;
         end else begin  // No-op
@@ -199,7 +186,6 @@ always @(posedge clk or posedge rst) begin
         end
 
         if (ce) begin
-            // TODO Add wrap around for out of bounds.
             for (k = 0; k < GRID_SIZE; k++) begin
                 north_index[k] <= north_index[k] + 1;
                 west_index[k] <= west_index[k] + 1;
