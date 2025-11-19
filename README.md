@@ -12,7 +12,7 @@ This project creates a basic linear algebra accelerator in Verilog. As it is a p
  * `HALT`
 
 ### Assembler Usage
-`python assembler.py <file_name>`
+`python assembler.py <file_name>` \
 <file_name> should have a .asm extension.
 
 ### Simulation
