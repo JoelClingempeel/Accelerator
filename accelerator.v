@@ -187,7 +187,7 @@ always @(posedge clk or posedge rst) begin
         end else if (opcode == 8'd5) begin  // Vec Scal Mult
             // TODO Add support for negative scalars.
             for (n = 0; n < VEC_BUFFER_LEN; n++) begin
-                vec_buffer[n] <= $signed(operand2) * $signed(memory[operand1+n]);
+                vec_buffer[n] <= $signed(memory[operand2]) * $signed(memory[operand1+n]);
             end
             dest_buffer <= operand3;
             length_buffer <= operand4;
