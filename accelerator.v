@@ -11,8 +11,8 @@ parameter VEC_BUFFER_LEN = 8;
 parameter NUM_INSTRUCTIONS = 16;
 parameter WORDS_IN_MEMORY = 32;
 
-reg [31:0] instructions [NUM_INSTRUCTIONS-1:0];
-reg [31:0] instructions_cache [3*NUM_INSTRUCTIONS-1:0];
+reg [23:0] instructions [NUM_INSTRUCTIONS-1:0];
+reg [23:0] instructions_cache [3*NUM_INSTRUCTIONS-1:0];
 reg [NUM_SIZE-1:0] memory [WORDS_IN_MEMORY-1:0];
 reg [$clog2(NUM_INSTRUCTIONS)-1:0] pc;
 reg halted;
@@ -23,7 +23,7 @@ reg [$clog2(NUM_INSTRUCTIONS)+1:0] fetch_ptr_dest;
 reg fetching_flag;
 
 // Slice up current instruction into opcode and operands.
-wire [31:0] curr_instruction;
+wire [23:0] curr_instruction;
 assign curr_instruction = instructions_cache[pc];
 wire [5:0] opcode;
 assign opcode = curr_instruction[23:18];
