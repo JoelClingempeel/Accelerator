@@ -73,6 +73,7 @@ wire [NUM_SIZE-1:0] vec_buffer[VEC_BUFFER_LEN-1:0];
 wire copy_vec_buffer_flag_wire;
 wire [4:0] dest_buffer_wire;
 wire [2:0] length_buffer_wire;
+reg enable;
 
 generate
     genvar q;
@@ -97,6 +98,7 @@ vpu my_vpu(
     .operand2(operand2),
     .operand3(operand3),
     .operand4(operand4),
+    .enable(enable),
     .flat_vec_buffer_wire(flat_vec_buffer_wire),
     .copy_vec_buffer_flag_wire(copy_vec_buffer_flag_wire),
     .dest_buffer_wire(dest_buffer_wire),
@@ -111,6 +113,8 @@ vpu my_vpu(
     assign out10 = memory[10];
     assign out11 = memory[11];
 `endif
+
+reg delay;
 
 integer k, l, m, n;
 always @(posedge clk or posedge rst) begin
@@ -137,6 +141,8 @@ always @(posedge clk or posedge rst) begin
         copy_vec_buffer_flag <= 0;
         offset <= 0;
         flat_vec_buffer <= 0;
+        delay <= 0;
+        enable <= 1;
     end else if (!halted) begin  // Rising clk edge
         // Run matrix multiplication stages.
         if (mat_mult_stage > 0) begin
@@ -184,6 +190,7 @@ always @(posedge clk or posedge rst) begin
                 offset <= 0;
                 pc <= pc + 1;
                 copy_vec_buffer_flag <= 0;
+                enable <= 1;
             end
         end else if (opcode == 8'd1) begin  // Mat Mult
             mat_mult_stage <= 1;
@@ -207,6 +214,7 @@ always @(posedge clk or posedge rst) begin
             dest_buffer <= dest_buffer_wire;
             length_buffer <= length_buffer_wire;
             flat_vec_buffer <= flat_vec_buffer_wire;
+            enable <= 0;
         end
     end
 end
