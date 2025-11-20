@@ -118,8 +118,6 @@ vpu my_vpu(
     assign out11 = memory[11];
 `endif
 
-reg delay;
-
 integer k, l, m, n, r;
 always @(posedge clk or posedge rst) begin
     if (rst) begin
@@ -148,7 +146,6 @@ always @(posedge clk or posedge rst) begin
         copy_vec_buffer_flag <= 0;
         offset <= 0;
         flat_vec_buffer <= 0;
-        delay <= 0;
         enable <= 1;
         fetch_ptr_src <= 0;
         fetch_ptr_dest <= 0;
