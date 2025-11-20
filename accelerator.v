@@ -15,9 +15,11 @@ reg [31:0] instructions [NUM_INSTRUCTIONS-1:0];
 reg [31:0] instructions_cache [3*NUM_INSTRUCTIONS-1:0];
 reg [NUM_SIZE-1:0] memory [WORDS_IN_MEMORY-1:0];
 reg [$clog2(NUM_INSTRUCTIONS)-1:0] pc;
+reg halted;
+
+// Instruction fetching setup
 reg [$clog2(NUM_INSTRUCTIONS)-1:0] fetch_ptr_src;
 reg [$clog2(NUM_INSTRUCTIONS)+1:0] fetch_ptr_dest;
-reg halted;
 reg fetching_flag;
 
 // Slice up current instruction into opcode and operands.
@@ -121,7 +123,7 @@ vpu my_vpu(
 integer k, l, m, n, r;
 always @(posedge clk or posedge rst) begin
     if (rst) begin
-        // Set all registers to 0.
+        // Initialize registers.
         for (k = 0; k < GRID_SIZE; k++) begin
             north_index[k] <= 0;
             west_index[k] <= 0;
@@ -151,6 +153,8 @@ always @(posedge clk or posedge rst) begin
         fetch_ptr_dest <= 0;
         fetching_flag <= 1;
     end else if (!halted) begin  // Rising clk edge
+        // Fetch instructions into instructions_cache, introducing
+        // bubbles as needed to avoid timing issues.
         if (fetching_flag) begin
             if (instructions[fetch_ptr_src][23:18] > 1 &&
                 instructions[fetch_ptr_src][23:18] < 6) begin
@@ -211,11 +215,14 @@ always @(posedge clk or posedge rst) begin
                 copy_vec_buffer_flag <= 0;
                 enable <= 1;
             end
-        end else if (opcode == 8'd1) begin  // Mat Mult
+        // Start matrix multiplication.
+        end else if (opcode == 8'd1) begin
             mat_mult_stage <= 1;
-        end else if (opcode == 10) begin  // Halt
+        // Halt running.
+        end else if (opcode == 10) begin
             halted <= 1;
-        end else begin  // No-op
+        // No-op.
+        end else begin
             pc <= pc + 1;
         end
 
