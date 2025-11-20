@@ -4,7 +4,7 @@ module accelerator(
 );
 
 parameter NUM_SIZE = 16;
-parameter BUFFER_LEN = 32;
+parameter MAT_BUFFER_LEN = 5;
 parameter GRID_SIZE = 2;
 parameter ADDRESS_LEN = 3;
 parameter VEC_BUFFER_LEN = 8;
@@ -36,8 +36,8 @@ assign operand4 = curr_instruction[2:0];
 
 // MXU Setup
 reg [3:0] mat_mult_stage;
-reg [NUM_SIZE-1:0] north_buffer[GRID_SIZE-1:0][BUFFER_LEN-1:0];
-reg [NUM_SIZE-1:0] west_buffer[GRID_SIZE-1:0][BUFFER_LEN-1:0];
+reg [NUM_SIZE-1:0] north_buffer[GRID_SIZE-1:0][MAT_BUFFER_LEN-1:0];
+reg [NUM_SIZE-1:0] west_buffer[GRID_SIZE-1:0][MAT_BUFFER_LEN-1:0];
 reg [ADDRESS_LEN-1:0] north_index[GRID_SIZE-1:0];
 reg [ADDRESS_LEN-1:0] west_index[GRID_SIZE-1:0];
 wire [NUM_SIZE*GRID_SIZE-1:0] north_input;
@@ -127,7 +127,7 @@ always @(posedge clk or posedge rst) begin
         for (k = 0; k < GRID_SIZE; k++) begin
             north_index[k] <= 0;
             west_index[k] <= 0;
-            for (l = 0; l < BUFFER_LEN; l++) begin
+            for (l = 0; l < MAT_BUFFER_LEN; l++) begin
                 north_buffer[k][l] <= 0;
                 west_buffer[k][l] <= 0;
             end

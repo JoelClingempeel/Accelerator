@@ -10,7 +10,7 @@ parameter string DATA_FILE = "data.txt";
 reg clk = 0;
 reg rst = 0;
 
-accelerator #(.NUM_SIZE(16), .BUFFER_LEN(32), .GRID_SIZE(2)) uut (
+accelerator uut (
     .clk(clk),
     .rst(rst)
 );
