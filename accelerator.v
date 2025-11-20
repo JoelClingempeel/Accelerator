@@ -12,13 +12,17 @@ parameter NUM_INSTRUCTIONS = 16;
 parameter WORDS_IN_MEMORY = 32;
 
 reg [31:0] instructions [NUM_INSTRUCTIONS-1:0];
+reg [31:0] instructions_cache [3*NUM_INSTRUCTIONS-1:0];
 reg [NUM_SIZE-1:0] memory [WORDS_IN_MEMORY-1:0];
 reg [$clog2(NUM_INSTRUCTIONS)-1:0] pc;
+reg [$clog2(NUM_INSTRUCTIONS)-1:0] fetch_ptr_src;
+reg [$clog2(NUM_INSTRUCTIONS)+1:0] fetch_ptr_dest;
 reg halted;
+reg fetching_flag;
 
 // Slice up current instruction into opcode and operands.
 wire [31:0] curr_instruction;
-assign curr_instruction = instructions[pc];
+assign curr_instruction = instructions_cache[pc];
 wire [5:0] opcode;
 assign opcode = curr_instruction[23:18];
 wire [4:0] operand1, operand2, operand3;
@@ -116,7 +120,7 @@ vpu my_vpu(
 
 reg delay;
 
-integer k, l, m, n;
+integer k, l, m, n, r;
 always @(posedge clk or posedge rst) begin
     if (rst) begin
         // Set all registers to 0.
@@ -130,8 +134,11 @@ always @(posedge clk or posedge rst) begin
         end
         ce <= 0;
         for (m = 0; m < 32; m++) begin
-            instructions[m] <= 0;
+            instructions_cache[m] <= 0;
             memory[m] <= 0;
+        end
+        for (r = 0; r < 3*32; r++) begin
+            instructions[r] <= 0;
         end
         pc <= 0;
         mat_mult_stage <= 0;
@@ -143,9 +150,24 @@ always @(posedge clk or posedge rst) begin
         flat_vec_buffer <= 0;
         delay <= 0;
         enable <= 1;
+        fetch_ptr_src <= 0;
+        fetch_ptr_dest <= 0;
+        fetching_flag <= 1;
     end else if (!halted) begin  // Rising clk edge
+        if (fetching_flag) begin
+            if (instructions[fetch_ptr_src][23:18] > 1 &&
+                instructions[fetch_ptr_src][23:18] < 6) begin
+                fetch_ptr_dest <= fetch_ptr_dest + 3;
+            end else begin
+                fetch_ptr_dest <= fetch_ptr_dest + 1;
+            end
+            fetch_ptr_src <= fetch_ptr_src + 1;
+            instructions_cache[fetch_ptr_dest] <= instructions[fetch_ptr_src];
+            if (fetch_ptr_src == NUM_INSTRUCTIONS - 1) begin
+                fetching_flag <= 0;
+            end
         // Run matrix multiplication stages.
-        if (mat_mult_stage > 0) begin
+        end else if (mat_mult_stage > 0) begin
             case (mat_mult_stage)
                 1: begin
                     // Prepare systolic array buffers.
