@@ -113,11 +113,11 @@ vpu my_vpu(
 
 // Additional wires to view part of memory in a simulator.
 `ifndef SYNTHESIS
-    wire [NUM_SIZE-1:0] out00, out01, out10, out11;
-    assign out00 = memory[8];
-    assign out01 = memory[9];
-    assign out10 = memory[10];
-    assign out11 = memory[11];
+    wire [NUM_SIZE-1:0] out1, out2, out3, out4;
+    assign out1 = memory[8];
+    assign out2 = memory[9];
+    assign out3 = memory[10];
+    assign out4 = memory[11];
 `endif
 
 integer k, l, m, n, r;
