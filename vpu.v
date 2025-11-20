@@ -7,7 +7,7 @@ module vpu(
     input wire [4:0] operand2,
     input wire [4:0] operand3,
     input wire [2:0] operand4,
-    input wire enable,
+    input wire ce,
     output wire [(16*8)-1:0] flat_vec_buffer_wire,
     output wire copy_vec_buffer_flag_wire,
     output wire [4:0] dest_buffer_wire,
@@ -58,7 +58,7 @@ always @(posedge clk or posedge rst) begin
         dest_buffer <= 0;
         length_buffer <= 0;
         copy_vec_buffer_flag <= 0;
-    end else if (enable) begin
+    end else if (ce) begin
         if (opcode == 8'd2) begin  // Vec Add
             for (n = 0; n < VEC_BUFFER_LEN; n++) begin
                 vec_buffer[n] <= $signed(memory[operand1+n]) + $signed(memory[operand2+n]);

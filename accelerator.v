@@ -36,7 +36,6 @@ assign operand4 = curr_instruction[2:0];
 
 // MXU Setup
 reg [3:0] mat_mult_stage;
-reg ce;
 reg [NUM_SIZE-1:0] north_buffer[GRID_SIZE-1:0][BUFFER_LEN-1:0];
 reg [NUM_SIZE-1:0] west_buffer[GRID_SIZE-1:0][BUFFER_LEN-1:0];
 reg [ADDRESS_LEN-1:0] north_index[GRID_SIZE-1:0];
@@ -45,6 +44,7 @@ wire [NUM_SIZE*GRID_SIZE-1:0] north_input;
 wire [NUM_SIZE*GRID_SIZE-1:0] west_input;
 wire [16*2*2-1:0] mxu_result_out;
 wire [NUM_SIZE-1:0] mxu_result[1:0][1:0];
+reg mxu_enable;
 
 generate
     genvar i,j;
@@ -61,7 +61,7 @@ endgenerate
 mxu my_mxu(
     .clk(clk),
     .rst(rst),
-    .ce(ce),
+    .ce(mxu_enable),
     .north_input(north_input),
     .west_input(west_input),
     .result_out(mxu_result_out)
@@ -79,7 +79,7 @@ wire [NUM_SIZE-1:0] vec_buffer[VEC_BUFFER_LEN-1:0];
 wire copy_vec_buffer_flag_wire;
 wire [4:0] dest_buffer_wire;
 wire [2:0] length_buffer_wire;
-reg enable;
+reg vpu_enable;
 
 generate
     genvar q;
@@ -104,7 +104,7 @@ vpu my_vpu(
     .operand2(operand2),
     .operand3(operand3),
     .operand4(operand4),
-    .enable(enable),
+    .ce(vpu_enable),
     .flat_vec_buffer_wire(flat_vec_buffer_wire),
     .copy_vec_buffer_flag_wire(copy_vec_buffer_flag_wire),
     .dest_buffer_wire(dest_buffer_wire),
@@ -132,7 +132,7 @@ always @(posedge clk or posedge rst) begin
                 west_buffer[k][l] <= 0;
             end
         end
-        ce <= 0;
+        mxu_enable <= 0;
         for (m = 0; m < 32; m++) begin
             instructions_cache[m] <= 0;
             memory[m] <= 0;
@@ -148,7 +148,7 @@ always @(posedge clk or posedge rst) begin
         copy_vec_buffer_flag <= 0;
         offset <= 0;
         flat_vec_buffer <= 0;
-        enable <= 1;
+        vpu_enable <= 1;
         fetch_ptr_src <= 0;
         fetch_ptr_dest <= 0;
         fetching_flag <= 1;
@@ -180,7 +180,7 @@ always @(posedge clk or posedge rst) begin
                     north_buffer[0][1] <= memory[operand2+2];
                     north_buffer[1][1] <= memory[operand2+1];
                     north_buffer[1][2] <= memory[operand2+3];
-                    ce <= 1;  // Start systolic array.
+                    mxu_enable <= 1;  // Start systolic array.
                 end
                 4: begin
                     memory[operand3] <= mxu_result[0][0];
@@ -193,7 +193,7 @@ always @(posedge clk or posedge rst) begin
                 end
                 7: begin
                     memory[operand3+3] <= mxu_result[1][1];
-                    ce <= 0;  // Stop systolic array.
+                    mxu_enable <= 0;  // Stop systolic array.
                     pc <= pc + 1;
                 end
                 default: begin
@@ -213,7 +213,7 @@ always @(posedge clk or posedge rst) begin
                 offset <= 0;
                 pc <= pc + 1;
                 copy_vec_buffer_flag <= 0;
-                enable <= 1;
+                vpu_enable <= 1;
             end
         // Start matrix multiplication.
         end else if (opcode == 8'd1) begin
@@ -227,7 +227,7 @@ always @(posedge clk or posedge rst) begin
         end
 
         // Cycle through buffers when matrix multiple is ongoing.
-        if (ce) begin
+        if (mxu_enable) begin
             for (k = 0; k < GRID_SIZE; k++) begin
                 north_index[k] <= north_index[k] + 1;
                 west_index[k] <= west_index[k] + 1;
@@ -240,7 +240,7 @@ always @(posedge clk or posedge rst) begin
             dest_buffer <= dest_buffer_wire;
             length_buffer <= length_buffer_wire;
             flat_vec_buffer <= flat_vec_buffer_wire;
-            enable <= 0;
+            vpu_enable <= 0;
         end
     end
 end
