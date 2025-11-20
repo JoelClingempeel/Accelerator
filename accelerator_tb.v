@@ -4,6 +4,8 @@ module accelerator_tb();
 
 // Set to the binary file produced by running the assembler.
 parameter string BINARY_FILE = "test.bin";
+// Set to the data file to be processed - one signed integer per line.
+parameter string DATA_FILE = "data.txt";
 
 reg clk = 0;
 reg rst = 0;
@@ -18,20 +20,22 @@ always begin
     clk = ~clk;
 end
 
+integer mem_file, i;
 initial begin
     # 10
     rst = ~rst;
     # 10
     rst = ~rst;
+
     $readmemb(BINARY_FILE, uut.instructions);
-    uut.memory[0] = 16'd3;
-    uut.memory[1] = -$signed(16'd1);
-    uut.memory[2] = -$signed(16'd4);
-    uut.memory[3] = 16'd1;
-    uut.memory[4] = 16'd2;
-    uut.memory[5] = 16'd1;
-    uut.memory[6] = 16'd7;
-    uut.memory[7] = 16'd8;
+
+    mem_file = $fopen(DATA_FILE, "r");
+    for (i = 0; i < 32; i++) begin
+        $fscanf(mem_file, "%d", uut.memory[i]);
+        if ($feof(mem_file)) begin
+            break;
+        end
+    end
 end
 
 initial begin
